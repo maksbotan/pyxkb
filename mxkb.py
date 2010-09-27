@@ -35,25 +35,39 @@ def xkb_settings_layout_dialog_run():
     
     t_view = gtk.TreeView()
 
-    registry = xkb_config_get_xkl_registry()
+#    registry = xkb_config_get_xkl_registry()
 
-    dialog = gt.Dialog("Add layout"
+    dialog = gtk.Dialog("Add layout",
                       None,
-                      gtk.GTK_DIALOG_MODAL | gtk.GTK_DIALOG_DESTROY_WITH_PARENT,
-                      (gtk.GTK_STOCK_CANCEL, gtk.GTK_RESPONSE_CANCEL, gtk.GTK_STOCK_OK, gtk.GTK_RESPONSE_OK),
-                      None)
+                      gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                      (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 
-    treestore = gtk_tree_store_new('gchararray', 'gchararray')
+    treestore = gtk.TreeStore('gchararray', 'gchararray')
 
     #    xkl_config_registry_foreach_layout (registry, (ConfigItemProcessFunc)
     #            xkb_settings_add_layout_to_available_layouts_tree, treestore);
 
     renderer = gtk.CellRendererText()
 
-    column = gtk.TreeViewVolumn(None,
+    column = gtk.TreeViewColumn(None,
                                 renderer,
-                                "text",
-                                0,
-                                None)
+                                text=1,
+                                foreground=0)
+
+    t_view.set_model(treestore)
+    t_view.append_column(column)
+
+    treestore.set_sort_column_id(0, gtk.SORT_ASCENDING)
+
+    scrolledw = gtk.ScrolledWindow()
+
+    dialog.vbox.add(scrolledw)
+
+    t_view.show()
+    dialog.set_default_size(360,420)
+    dialog.show()
+    response = dialog.run()
+
+
 
 
