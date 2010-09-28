@@ -266,12 +266,12 @@ def lxkb_content_area():
     button = gtk.Button(stock=gtk.STOCK_ADD)
     hbox_btn.add(button)
 
-    button.connect("clicked", lxkb_add_layout)
+    button.connect("clicked", lxkb_add_layout, None)
 
     button = gtk.Button(stock=gtk.STOCK_REMOVE)
     hbox_btn.add(button)
 
-    button.connect("clicked", lxkb_remove_layout)
+    button.connect("clicked", lxkb_remove_layout, None)
 
     button = gtk.Button(stock=gtk.STOCK_EDIT)
     hbox_btn.add(button)
@@ -283,10 +283,48 @@ def lxkb_content_area():
 
     return vbox
 
-wnd = gtk.Window()
-vbox = lxkb_content_area()
-vbox.show_all()
-wnd.add(vbox)
-wnd.show()
-gtk.main()
+#Switcher implementation
+def change_current_layout():
+#    xkb_config_next_group ()
+    pass
+    
+def tray_icon_press(widget, event, userdata):
+    if event.button == 3: #right button
+        #popup menu
+        return True
+
+    change_current_layout()
+
+def lxkb_config():
+    dlg = gtk.Dialog("Keyboard layouts settings",
+        flags=gtk.DIALOG_MODAL,
+        buttons=(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
+
+    dlg.resizable = False
+    dlg.vbox.add(lxkb_content_area())
+
+    dlg.show_all()
+    response = dlg.run()
+    
+    dlg.destroy()
+
+def lxkb_save_config():
+    pass
+
+def lxkb_open_config():
+    pass
+
+def lxkb_constructor():
+    pass
+
+
+#wnd = gtk.Window()
+#vbox = lxkb_content_area()
+#vbox.show_all()
+#wnd.add(vbox)
+#wnd.show()
+#gtk.main()
+
+lxkb_config()
+
 #xkb_settings_layout_dialog_run()
