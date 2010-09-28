@@ -2,26 +2,26 @@
 
 import gtk
 
-layouts = {
-    "us": "U.S.English",
-    "es": "Spain/Mexico",
-    "cf": "Canada/Quebec",
-    "hu": "Hungria",
-    "it": "Italia",
-    "ru": "Russia",
-    "uk": "United Kingdom",
-    "fr-latin1": "France",
-    "be-latin1": "Belgique",
-    "br-abnt2": "Brazil",
-    "croat": "Croat",
-    "cz-lat2": "Czech",
-    "de_CH-latin1": "Schweizer Deutsch",
-    "nl2": "Netherlands",
-    "no-latin1": "Norway",
-    "pl2": "Poland",
-    "pt-latin1": "Portugal",
-    "se-lat6": "Sweden",
-    "sg-latin1": "Singapore"}
+data = [
+    ["us": "U.S.English"],
+    ["es": "Spain/Mexico"],
+    ["cf": "Canada/Quebec"],
+    ["hu": "Hungria"],
+    ["it": "Italia"],
+    ["ru": "Russia"],
+    ["uk": "United Kingdom"],
+    ["fr-latin1": "France"],
+    ["be-latin1": "Belgique"],
+    ["br-abnt2": "Brazil"],
+    ["croat": "Croat"],
+    ["cz-lat2": "Czech"],
+    ["de_CH-latin1": "Schweizer Deutsch"],
+    ["nl2": "Netherlands"],
+    ["no-latin1": "Norway"],
+    ["pl2": "Poland"],
+    ["pt-latin1": "Portugal"],
+    ["se-lat6": "Sweden"],
+    ["sg-latin1": "Singapore"]]
 
 def xci_desc_to_utf8 (ci):
     #TODO: libxklavier
@@ -127,5 +127,93 @@ def lxkb_remove_layout(menuitem, userdata):
         treestore.remove(model, iter)
 
 #        xkb_config_remove_group(layout_selected);
+
+def fixed_toggle(cell, path_str, model):
+#      cur = xkb_config_get_current_group();
+    path = path_str.split(":")
+    path_old = (cur, )
+
+    ind = path[0]
+
+    if ind != cur:
+        iter = model.get_iter(path)
+        iter_old = model.get_iter(path_old)
+
+        model.set(iter,
+            0, True)
+        model.set(iter_old,
+            0, False)
+
+#      xkb_config_set_group(*ind);
+
+def lxkb_add_columns_selected_layouts():
+    model = treeview.get_model()
+
+    #column for fixed toggles
+    renderer = gtk.CellRendererToggle()
+    renderer.connect("toggled", fixed_toggle, model)
+
+    renderer.set_radio(True)
+
+    column = gtk.TreeViewColumn("default",
+        renderer,
+        active=0)
+
+    treeview.append_column(column)
+    
+    #column for bug numbers
+    renderer = gtk.CellRendererText()
+    column = gtk.TreeViewColumn("Layout",
+        renderer,
+        text=1)
+
+    column.set_sort_column_id(1)
+    treeview.append_column(column)
+
+    #column for severities
+    renderer = gtk.CellRendererText()
+    column = gtk.TreeViewColumn("Description",
+        renderer,
+        text=2)
+    column.set_sort_column_id(2)
+    treeview.append_column(column)
+
+def lxkb_create_model_selected_layouts():
+    store = gtk.ListStore(
+        gobject.TYPE_BOOLEAN,
+        gobject.TYPE_STRING,
+        gobject.TYPE_STRING)
+
+#  current_group = xkb_config_get_current_group();
+#  group_count = xkb_config_get_group_count();
+    current_group = 0
+    group_count = 1
+
+    for i in xrange(group_count):
+#      group_map = xkb_config_get_group_map(i);
+#      variant_map = xkb_config_get_variant_map(i);
+        iter = store.append()
+#        store.set(iter,
+#            0, False if i != current_group else True,
+#            1, group_map,
+#            2, xkb_config_get_layout_desc(group_map, variant_map))
+
+    return store
+
+def lxkb_create_combo_box_model():
+#   registry = xkb_config_get_xkl_registry ();
+    
+    store = gtk.TreeStore(gobject.TYPE_STRING)
+
+    for i in xrange(len(data)):
+        it = store.append()
+        store.set(it,
+            0, data[i][1])
+    
+    return store
+
+
+
+
 
 xkb_settings_layout_dialog_run()
