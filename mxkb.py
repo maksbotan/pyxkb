@@ -1,27 +1,29 @@
 #!/usr/bin/env python
 
-import gtk
+import gtk, gobject
 
 data = [
-    ["us": "U.S.English"],
-    ["es": "Spain/Mexico"],
-    ["cf": "Canada/Quebec"],
-    ["hu": "Hungria"],
-    ["it": "Italia"],
-    ["ru": "Russia"],
-    ["uk": "United Kingdom"],
-    ["fr-latin1": "France"],
-    ["be-latin1": "Belgique"],
-    ["br-abnt2": "Brazil"],
-    ["croat": "Croat"],
-    ["cz-lat2": "Czech"],
-    ["de_CH-latin1": "Schweizer Deutsch"],
-    ["nl2": "Netherlands"],
-    ["no-latin1": "Norway"],
-    ["pl2": "Poland"],
-    ["pt-latin1": "Portugal"],
-    ["se-lat6": "Sweden"],
-    ["sg-latin1": "Singapore"]]
+    ["us", "U.S.English"],
+    ["es", "Spain/Mexico"],
+    ["cf", "Canada/Quebec"],
+    ["hu", "Hungria"],
+    ["it", "Italia"],
+    ["ru", "Russia"],
+    ["uk", "United Kingdom"],
+    ["fr-latin1", "France"],
+    ["be-latin1", "Belgique"],
+    ["br-abnt2", "Brazil"],
+    ["croat", "Croat"],
+    ["cz-lat2", "Czech"],
+    ["de_CH-latin1", "Schweizer Deutsch"],
+    ["nl2", "Netherlands"],
+    ["no-latin1", "Norway"],
+    ["pl2", "Poland"],
+    ["pt-latin1", "Portugal"],
+    ["se-lat6", "Sweden"],
+    ["sg-latin1", "Singapore"]]
+
+treeview = None
 
 def xci_desc_to_utf8 (ci):
     #TODO: libxklavier
@@ -32,7 +34,6 @@ def xkb_settings_add_variant_to_available_layouts_tree (config_registry, config_
     pass
 
 def xkb_settings_layout_dialog_run():
-    
     t_view = gtk.TreeView()
 
 #    registry = xkb_config_get_xkl_registry()
@@ -206,14 +207,86 @@ def lxkb_create_combo_box_model():
     store = gtk.TreeStore(gobject.TYPE_STRING)
 
     for i in xrange(len(data)):
-        it = store.append()
+        it = store.append(None)
         store.set(it,
             0, data[i][1])
     
     return store
 
+def lxkb_content_area():
+    vbox = gtk.VBox(False, 0)
 
+    #combo with layouts
+    frame_layouts = gtk.Frame("Select one input language")
 
+    hbox_layouts = gtk.HBox(False, 0)
 
+    vbox.pack_start(frame_layouts, False, False, 0)
+    hbox_layouts.set_border_width(5)
+    frame_layouts.add(hbox_layouts)
 
-xkb_settings_layout_dialog_run()
+    model = lxkb_create_combo_box_model()
+
+    combo_layouts = gtk.ComboBox(model)
+    combo_layouts.set_active(0)
+
+    hbox_layouts.add(combo_layouts)
+
+    renderer = gtk.CellRendererText()
+    combo_layouts.pack_start(renderer, False)
+#    gtk.CellLayout.set_attributes(combo_layouts,text=0)
+
+    #treeview and buttons
+    frame_tv = gtk.Frame("Selected Layouts")
+    vbox_tv = gtk.VBox(False, 0)
+    vbox.add(frame_tv)
+    vbox_tv.set_border_width(5)
+    frame_tv.add(vbox_tv)
+
+    #scrolled window
+    sw = gtk.ScrolledWindow()
+    sw.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+    sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+    vbox_tv.pack_start(sw, True, True, 0)
+    sw.set_size_request(-1, 150)
+
+    #creating tree view
+    model = lxkb_create_model_selected_layouts()
+    treeview = gtk.TreeView(model)
+    sw.add(treeview)
+
+    #creating buttons
+    hbox_btn = gtk.HButtonBox()
+    hbox_btn.set_border_width(5)
+    vbox_tv.add(hbox_btn)
+
+    hbox_btn.set_layout(gtk.BUTTONBOX_END)
+    hbox_btn.set_spacing(8)
+
+    button = gtk.Button(stock=gtk.STOCK_ADD)
+    hbox_btn.add(button)
+
+    button.connect("clicked", lxkb_add_layout)
+
+    button = gtk.Button(stock=gtk.STOCK_REMOVE)
+    hbox_btn.add(button)
+
+    button.connect("clicked", lxkb_remove_layout)
+
+    button = gtk.Button(stock=gtk.STOCK_EDIT)
+    hbox_btn.add(button)
+
+    #creating checkbox
+    check = gtk.CheckButton("Manage layouts per application")
+    vbox.pack_start(check, False, False, 0)
+    vbox.set_border_width(5)
+
+    return vbox
+
+wnd = gtk.Window()
+vbox = lxkb_content_area()
+vbox.show_all()
+wnd.add(vbox)
+wnd.show()
+gtk.main()
+#xkb_settings_layout_dialog_run()
