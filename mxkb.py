@@ -47,12 +47,17 @@ def xkb_settings_layout_dialog_run():
     #    xkl_config_registry_foreach_layout (registry, (ConfigItemProcessFunc)
     #            xkb_settings_add_layout_to_available_layouts_tree, treestore);
 
+    iter = treestore.append(None)
+    treestore.set(iter, 0, "ru", 1, "ru")
+
+    child = treestore.append(iter)
+    treestore.set(child, 0, "ru-1", 1, "2")
+
     renderer = gtk.CellRendererText()
 
     column = gtk.TreeViewColumn(None,
                                 renderer,
-                                text=1,
-                                foreground=0)
+                                text=0)
 
     t_view.set_model(treestore)
     t_view.append_column(column)
@@ -60,14 +65,67 @@ def xkb_settings_layout_dialog_run():
     treestore.set_sort_column_id(0, gtk.SORT_ASCENDING)
 
     scrolledw = gtk.ScrolledWindow()
+    scrolledw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+    scrolledw.show()
+    scrolledw.add(t_view)
 
     dialog.vbox.add(scrolledw)
 
     t_view.show()
+
     dialog.set_default_size(360,420)
     dialog.show()
     response = dialog.run()
 
+    if response == gtk.RESPONSE_OK:
+        selection = t_view.get_selection()
+        
+        model, iter = selection.get_selected()
+        desc, id = model.get(iter, 0, 1)
+        path = model.get_path(iter)
+        
+        if model.iter_depth(iter) == 1:
+            strings = [id, ""]
+        else:
+            strings = [None, id]
+            path = model.get_path(model.iter_parent(iter))
+            iter = model.get_iter(path)
+            group_desc, id = model.get(model, iter, 0, 1)
+            string[0] = id
+            desc = "%s(%s)" % (group_desc, desc)
 
+        dialog.destroy()
+        return ",".join((strings[0], strings[1], desc))
+    
+    dialog.destroy()
+    return None
 
+def lxkb_add_layout(btn, combo):
+    sel_layout = xkb_settings_layout_dialog_run().split(",")
 
+    model = treeview.get_model()
+    iter = model.append
+
+    model.set(iter,
+        0, False,
+        1, sel_layout[0],
+        2, sel_layout[2])
+
+     #xkb_config_add_layout(sel_layout[GROUP_MAP], sel_layout[VARIANT_MAP]);
+
+def lxkb_remove_layout(menuitem, userdata):
+    selection = treeview.get_selection()
+    model = treeview.get_model()
+
+    if not selection.get_selected():
+        temp, iter = selection.get_selected()
+        del temp
+
+        path = model.get_path(iter)
+        layout_selected = path[0]
+
+        treestore.remove(model, iter)
+
+#        xkb_config_remove_group(layout_selected);
+
+xkb_settings_layout_dialog_run()
