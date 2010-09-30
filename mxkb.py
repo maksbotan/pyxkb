@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import gtk, gobject
-
+import gtk, gtk.gdk, gobject
+from xkb_config import xkb_config, xkb_settings, group_policy
 data = [
     ["us", "U.S.English"],
     ["es", "Spain/Mexico"],
@@ -36,8 +36,34 @@ def xkb_settings_add_variant_to_available_layouts_tree (config_registry, config_
 class pyxkb:
     
     def __init__(self):
-        pass
-    
+        xkb = xkb_settings()
+        
+        xkb.group_policy = group_policy.GLOBAL
+        xkb.never_modify_config = False
+        xkb.current = "us"
+        xkb.tray_icon = gtk.Label(xkb.current)
+        xkb.config_changed = False
+        xkb.next = 1
+        self.xkb_config = xkb_config(xkb, self.xkb_state_changed, xkb)
+        
+        self.open_config()
+        
+        xkb.mainw = gtk.EventBox()
+        xkb.mainw.add_events(gtk.gdk.BUTTON_PRESS_MASK)
+        xkb.mainw.set_size_request(24, 24)
+        
+        xkb.mainw.add(xkb.tray_icon)
+        
+        xkb.mainw.show_all()
+        xkb.mainw.set_tooltip_text("KeyBoard Layout Switcher")
+        xkb.mainw.connect("button-press-event", self.tray_icon_press, xkb)
+        
+        wnd = gtk.Window()
+        wnd.add(xkb.mainw)
+        wnd.show_all()
+        
+        gtk.main()
+        
     def add_layout(self, btn, combo):
         sel_layout = self.xkb_settings_layout_dialog_run().split(",")
     
@@ -221,15 +247,14 @@ class pyxkb:
                 
     #Switcher implementation
     def change_current_layout(self):
-        #    xkb_config_next_group ()
-        pass
+        self.xkb_config.next_group()
                 
     def tray_icon_press(self, widget, event, userdata):
         if event.button == 3: #right button
-            #popup menu
+            self.config()
             return True
     
-        change_current_layout()
+        self.change_current_layout()
 
     def config(self):
         dlg = gtk.Dialog("Keyboard layouts settings",
@@ -247,12 +272,8 @@ class pyxkb:
     def save_config(self):
                 pass
 
-    def open_config():
+    def open_config(self):
         pass
-    
-    def constructor():
-        pass
-
     def xkb_settings_layout_dialog_run(self):
         t_view = gtk.TreeView()
         
@@ -320,6 +341,11 @@ class pyxkb:
                 
         dialog.destroy()
         return None
+    def xkb_state_changed(self, current_group, config_changed, settings):
+        self.update_display(settings)
+    
+    def update_display(self, settings):
+        pass
 #wnd = gtk.Window()
 #vbox = lxkb_content_area()
 #vbox.show_all()
@@ -328,7 +354,7 @@ class pyxkb:
 #gtk.main()
 
 pyxkb = pyxkb()
-pyxkb.config()
+#pyxkb.config()
 
 #lxkb_config()
 

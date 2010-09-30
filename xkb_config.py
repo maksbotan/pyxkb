@@ -38,7 +38,7 @@ class xkb_config:
         self.engine = None
         
         if not self.engine:
-            return False
+            return None
         
         self.update_settings (settings);
         
@@ -54,7 +54,7 @@ class xkb_config:
         
         #gdk_window_add_filter (NULL, (GdkFilterFunc) handle_xevent, NULL);
         
-        return True
+        return None
         
     def initialixe_xkb_options(self):
         #    XklState *state = xkl_engine_get_current_state (config->engine);
@@ -104,8 +104,8 @@ class xkb_config:
     def update_settings(self, settings):
         if not self.config_rec:
             self.config_rec = None # xkl_config_rec_new ()
-        
-        if settings.kbd_config = None or settings.never_modify_config:
+    
+        if (settings.kbd_config == None) or (settings.never_modify_config):
             #xkl_config_rec_get_from_server (config->config_rec, config->engine);
             activate_settings = False
             settings.kbd_config = xkb_kbd_config()
@@ -127,7 +127,7 @@ class xkb_config:
         
         if activate_settings and not settings.never_modify_config:
             #        xkl_config_rec_activate (config->config_rec, config->engine);
-        
+            pass
         self.initialize_xkb_options(settings)
         #self.update_display
         
@@ -135,13 +135,13 @@ class xkb_config:
     
         
     def window_changed(self, new_window_id, application_id):
-        if self.settings.group_policy = group_policy.GLOBAL:
+        if self.settings.group_policy == group_policy.GLOBAL:
             return None
-        elif self.settings.group_policy = group_policy.PER_WINDOW:
+        elif self.settings.group_policy == group_policy.PER_WINDOW:
             hashtable = self.window_map
             id = new_window_id
             self.current_window_id = id
-        elif self.settings.group = group_policy.PER_APPLICATION:
+        elif self.settings.group == group_policy.PER_APPLICATION:
             hashtable = self.application_map
             id = aplication_id
             self.current_application_id = id
@@ -156,11 +156,11 @@ class xkb_config:
         self.set_group(group)
     
     def application_closed(self, application_id):
-        if self.settings.group_policy = group_policy.PER_APPLICATION:
+        if self.settings.group_policy == group_policy.PER_APPLICATION:
             self.application_map.remove(application_id)
     
     def window_closed(self, window_id):
-        if self.settings.group_policy = group_policy.PER_WINDOW:
+        if self.settings.group_policy == group_policy.PER_WINDOW:
             self.window_map.remove(window_id)
     
     def get_group_count(self):
@@ -185,3 +185,15 @@ class xkb_config:
             #group = xkb_config_get_current_group ()
         
         return self.variants[group]
+    
+    def state_changed(engine, change, group, restore):
+        pass
+    
+    def xkl_config_changed(engine):
+        self.kbd_config = None
+        self.update_settings(self.settings)
+        
+        if self.callback:
+            self.callback(self.get_current_group(), True, self.callback_data)
+        
+    
