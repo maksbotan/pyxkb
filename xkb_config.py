@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import gtk
+import gtk, gtk.gdk
+import xklavier
 
 class group_policy:
     GLOBAL = 0
@@ -33,21 +34,21 @@ class xkb_config:
         self.callback = callback
         self.callback_data = callback_data
         
+        self.config_rec = None
         
-        #config->engine = xkl_engine_get_instance (GDK_DISPLAY ());
-        self.engine = None
+        self.engine = xklavier.Engine(gtk.gdk.display_get_default())
         
         if not self.engine:
             return None
         
-        self.update_settings (settings);
+        self.update_settings(settings);
         
-        #xkl_engine_set_group_per_toplevel_window (config->engine, FALSE);
+        self.engine.set_group_per_toplevel_window (False);
         
         cur = self.get_current_group()
         self.settings.current = cur
         
-        #    xkl_engine_start_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE);
+        self.engine.start_listen(xklavier.XKLL_TRACK_KEYBOARD_STATE);
         
         self.engine.connect("X-state-changed", self.state_changed, None)
         self.engine.connect("X-config-changed", self.config_changed, None)
@@ -56,16 +57,16 @@ class xkb_config:
         
         return None
         
-    def initialixe_xkb_options(self):
-        #    XklState *state = xkl_engine_get_current_state (config->engine);
-        self.group_count = len(self.config_rec.layouts)
+    def initialize_xkb_options(self, settings):
+        state = self.engine.get_current_state()
+        self.group_count = len(self.config_rec.get_layouts())
         
         self.window_map = {}
         self.application_map = {}
         
-        #~ registry = xkl_config_registry_get_instance (config->engine);
-        #~ xkl_config_registry_load (registry);
-        #~ config_item = xkl_config_item_new ();
+        registry = xklavier.ConfigRegistry(self.engine)
+        registry.load(False)
+        config_item = xklavier.ConfigItem()
         
         self.group_names = []
         self.variants = []
@@ -73,21 +74,28 @@ class xkb_config:
         index_variants = {}
         
         for i in xrange(self.group_count):
-            config_item.name = self.config_rec.layouts[i]
-            self.group_names.append(self.config_rec.layouts[i])
+            config_item.name = self.config_rec.get_layouts()[i]
+            self.group_names.append(self.config_rec.get_layouts()[i])
             
-            if self.config_rec.variants[i]:
-                config_item.name = self.config_rec.variants[i]
+            try:
+                config_item.name = self.config_rec.get_variants()[i]
+            except:
+                pass
+                
+            try:
+                self.variants.append(self.config_rec.get_variants()[i])
+            except:
+                self.variants.append("")
             
-            self.variants.append("" if not self.config_rec.variants[i] else self.config_rec.variants[i])
             val = index_variants.get(self.group_names[i])
             
             self.variant_index_by_group[self.group_names[i]] = val
             index_variants[self.group_names[i]] = val
         
     def get_current_group(self):
-        #XklState* state = xkl_engine_get_current_state (config->engine);
-        return state.group
+        state = self.engine.get_current_state()
+        print state
+        return state["group"]
         
     def set_group(self, grooup):
         if group <0 or group > self.group_count:
@@ -99,19 +107,20 @@ class xkb_config:
     def next_group(self):
         #xkl_engine_lock_group (config->engine,
         #xkl_engine_get_next_group (config->engine));
+        print "next group"
         pass
     
     def update_settings(self, settings):
         if not self.config_rec:
-            self.config_rec = None # xkl_config_rec_new ()
+            self.config_rec = xklavier.ConfigRec()
     
         if (settings.kbd_config == None) or (settings.never_modify_config):
-            #xkl_config_rec_get_from_server (config->config_rec, config->engine);
+            self.config_rec.get_from_server (self.engine)
             activate_settings = False
             settings.kbd_config = xkb_kbd_config()
-            settings.kbd_config.model = self.config_rec.model
-            settings.kbd_config.layouts = ",".join(self.config_rec.layouts)
-            settings.kbd_config.variants = ",".join(self.config_rec.variants)
+            settings.kbd_config.model = self.config_rec.get_model()
+            settings.kbd_config.layouts = ",".join(self.config_rec.get_layouts())
+            settings.kbd_config.variants = ",".join(self.config_rec.get_variants())
             settings.kbd_config.options = ["grp:alt_shift_toggle"]
         else:
             activate_settings = True
@@ -120,14 +129,14 @@ class xkb_config:
             settings.kbd_config.variants = self.config_rec.variants.split(",")
             settings.kbd_config.options = self.config_rec.options.split(",")
         
-        for opt in settings.kdb_config.options:
+        for opt in settings.kbd_config.options:
             if opt.startswith("grp:"):
                 settings.kbd_config.toggle_option = opt
                 break
         
         if activate_settings and not settings.never_modify_config:
-            #        xkl_config_rec_activate (config->config_rec, config->engine);
-            pass
+            self.config_rec.activate(self.engine)
+        
         self.initialize_xkb_options(settings)
         #self.update_display
         
@@ -189,11 +198,32 @@ class xkb_config:
     def state_changed(engine, change, group, restore):
         pass
     
-    def xkl_config_changed(engine):
+    def config_changed(engine):
         self.kbd_config = None
         self.update_settings(self.settings)
         
         if self.callback:
             self.callback(self.get_current_group(), True, self.callback_data)
         
+    def get_xkl_registry(self):
+        registry = xklavier.ConfigRegistry(self.engine)
+        registry.load(False)
+        
+        return registry
     
+    def get_layout_desc(self, group, variant):
+        reg = xklavier.ConfigRegistry(self.engine)
+        item = xklavier.ConfigItem()
+        
+        item.name = group
+        reg.find_layout(item)
+        
+        description = item.get_description()
+        
+        if variant:
+            item.name = variant
+            reg.find_variant(group, item)
+            
+            description = "%s(%s)" % (description, item.description)
+        
+        return description
