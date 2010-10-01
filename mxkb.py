@@ -64,6 +64,8 @@ class PyXKB:
         wnd.add(xkb.mainw)
         wnd.show_all()
         
+        wnd.connect("destroy", gtk.main_quit)
+        
         gtk.main()
         
     def add_layout(self, btn, combo):
@@ -291,10 +293,11 @@ class PyXKB:
         dlg.destroy()
                 
     def save_config(self):
-                pass
+        pass
 
     def open_config(self):
         pass
+        
     def layout_dialog_run(self):
         t_view = gtk.TreeView()
         
@@ -340,7 +343,7 @@ class PyXKB:
             desc, id = model.get(self.iter, 0, 1)
             path = model.get_path(self.iter)
             
-            if model.iter_depth(self.iter) == 1:
+            if model.iter_depth(self.iter) == 0:
                 strings = [id, ""]
             else:
                 strings = [None, id]

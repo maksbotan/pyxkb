@@ -53,7 +53,7 @@ class xkb_config:
         self.engine.connect("X-state-changed", self.state_changed, None)
         self.engine.connect("X-config-changed", self.config_changed, None)
         
-        #gdk_window_add_filter (NULL, (GdkFilterFunc) handle_xevent, NULL);
+        gtk.gdk.get_default_root_window().add_filter(self.handle_xevent, None)
         
         return None
         
@@ -94,19 +94,17 @@ class xkb_config:
         
     def get_current_group(self):
         state = self.engine.get_current_state()
-        print state
         return state["group"]
         
     def set_group(self, grooup):
         if group <0 or group > self.group_count:
             return False
         
-        #xkl_engine_lock_group (config->engine, group);
+        self.engine.lock_group(group)
         return True
     
     def next_group(self):
-        #xkl_engine_lock_group (config->engine,
-        #xkl_engine_get_next_group (config->engine));
+        self.engine.lock_group(self.engine.get_next_group())
         print "next group"
         pass
     
@@ -141,7 +139,6 @@ class xkb_config:
         #self.update_display
         
         return True
-    
         
     def window_changed(self, new_window_id, application_id):
         if self.settings.group_policy == group_policy.GLOBAL:
@@ -227,3 +224,8 @@ class xkb_config:
             description = "%s(%s)" % (description, item.description)
         
         return description
+
+    def handle_xevent(self, xev, event):
+       print "event"
+       self.engine.filter_events(xev)
+       return gtk.gdk.FILTER_CONTINUE
