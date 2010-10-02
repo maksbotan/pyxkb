@@ -98,7 +98,7 @@ typedef struct
     XklConfigRec         *config_rec;
 } t_xkb_config;
 
-t_xkb_settings * xkb_settings_new( /*LXDE GARBAGE Plugin * p */);
+/*t_xkb_settings * xkb_settings_new( *LXDE GARBAGE Plugin * p *);*/
 
 gboolean   	xkb_config_initialize            	    (t_xkb_config *config, t_xkb_settings *settings,
                                                      XkbCallback callback, 
