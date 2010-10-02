@@ -46,7 +46,9 @@ class PyXKB:
         xkb.tray_icon = gtk.Label(xkb.current)
         xkb.config_changed = False
         xkb.next = 1
-        self.xkb_config = xkb_config(xkb, self.xkb_state_changed, xkb)
+        wnd = gtk.Window()
+        wnd.show()
+        self.xkb_config = xkb_config(xkb, self.xkb_state_changed, xkb, wnd)
         
         self.open_config()
         
@@ -60,7 +62,7 @@ class PyXKB:
         xkb.mainw.set_tooltip_text("KeyBoard Layout Switcher")
         xkb.mainw.connect("button-press-event", self.tray_icon_press, xkb)
         
-        wnd = gtk.Window()
+#        wnd = gtk.Window()
         wnd.add(xkb.mainw)
         wnd.show_all()
         
@@ -359,7 +361,8 @@ class PyXKB:
                 
         dialog.destroy()
         return None
-    def xkb_state_changed(self, current_group, config_changed, settings):
+    def xkb_state_changed(self, currest_group, config_changed, settings):
+        print "state_changed"
         self.update_display(settings)
     
     def update_display(self, settings):

@@ -29,7 +29,7 @@ class xkb_settings:
     next = None
     
 class xkb_config:
-    def __init__(self, settings, callback, callback_data):
+    def __init__(self, settings, callback, callback_data, wnd):
         self.settings = settings
         self.callback = callback
         self.callback_data = callback_data
@@ -53,7 +53,8 @@ class xkb_config:
         self.engine.connect("X-state-changed", self.state_changed, None)
         self.engine.connect("X-config-changed", self.config_changed, None)
         
-        gtk.gdk.get_default_root_window().add_filter(self.handle_xevent, None)
+        wnd.window.add_filter(self.handle_xevent, None)
+#        gtk.gdk.get_default_root_window().add_filter(self.handle_xevent, None)
         
         return None
         
@@ -87,7 +88,7 @@ class xkb_config:
             except:
                 self.variants.append("")
             
-            val = index_variants.get(self.group_names[i])
+            val = index_variants.get(self.group_names[i], 0) + 1
             
             self.variant_index_by_group[self.group_names[i]] = val
             index_variants[self.group_names[i]] = val
@@ -96,7 +97,7 @@ class xkb_config:
         state = self.engine.get_current_state()
         return state["group"]
         
-    def set_group(self, grooup):
+    def set_group(self, group):
         if group <0 or group > self.group_count:
             return False
         
@@ -109,6 +110,10 @@ class xkb_config:
         pass
     
     def update_settings(self, settings):
+        self.settings = settings
+        
+        print settings
+
         if not self.config_rec:
             self.config_rec = xklavier.ConfigRec()
     
@@ -122,12 +127,12 @@ class xkb_config:
             settings.kbd_config.options = ["grp:alt_shift_toggle"]
         else:
             activate_settings = True
-            settings.kbd_config.model = self.config_rec.model
-            settings.kbd_config.layouts = self.config_rec.layouts.split(",")
-            settings.kbd_config.variants = self.config_rec.variants.split(",")
-            settings.kbd_config.options = self.config_rec.options.split(",")
+            settings.kbd_config.model = settings.kbd_config.model
+            settings.kbd_config.layouts = settings.kbd_config.layouts.split(",")
+            settings.kbd_config.variants = settings.kbd_config.variants.split(",")
+            settings.kbd_config.options = settings.kbd_config.options.split(",")
         
-        for opt in settings.kbd_config.options:
+        for opt in self.config_rec.get_options():
             if opt.startswith("grp:"):
                 settings.kbd_config.toggle_option = opt
                 break
@@ -141,6 +146,7 @@ class xkb_config:
         return True
         
     def window_changed(self, new_window_id, application_id):
+        print "window_changed"
         if self.settings.group_policy == group_policy.GLOBAL:
             return None
         elif self.settings.group_policy == group_policy.PER_WINDOW:
@@ -177,8 +183,7 @@ class xkb_config:
             return False
         
         if group == -1:
-            pass
-            #group = xkb_config_get_current_group ()
+            group = self.get_current_group ()
         
         return self.group_names[group]
     
@@ -187,15 +192,25 @@ class xkb_config:
             return False
         
         if group == -1:
-            pass
-            #group = xkb_config_get_current_group ()
+            group = self.get_current_group ()
         
         return self.variants[group]
     
-    def state_changed(engine, change, group, restore):
-        pass
+    def state_changed(self, engine, change, group, restore):
+        print "xkb_config.state_changed"
+        if change == xklavier.GROUP_CHANGED:
+            if self.settings.group_policy == group_policy.GLOBAL:
+                pass
+            elif self.settinga.group_policy == group_policy.PER_WINDOW:
+                self.window_map[self.current_window_id] = group
+            elif self.settings.group_policy == group_policy.PER_APPLICATION:
+                self.application_map[self.current_application_id] = group
+
+        if self.callback:
+            self.settings.current = self.group_names[group]
+            self.callback(group, False, self.callback_data) 
     
-    def config_changed(engine):
+    def config_changed(self, engine):
         self.kbd_config = None
         self.update_settings(self.settings)
         
@@ -226,6 +241,6 @@ class xkb_config:
         return description
 
     def handle_xevent(self, xev, event):
-       print "event"
+       print "event: %r" % xev
        self.engine.filter_events(xev)
        return gtk.gdk.FILTER_CONTINUE
