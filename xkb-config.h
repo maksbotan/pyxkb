@@ -34,7 +34,9 @@
 #include <glib/gstdio.h>
 #include <libxklavier/xklavier.h>
 
-#include <lxpanel/plugin.h>
+#include <gtk/gtk.h>
+
+/* LXDE GARBAGE: #include <lxpanel/plugin.h> */
 
 typedef enum
 {
@@ -54,7 +56,7 @@ typedef struct
 
 typedef struct
 {
-    Plugin    			* plugin;
+    /*LXDE GARBAGE:     Plugin    			* plugin; */
     GtkWidget 			* mainw,
 						* tray_icon;
   	gchar 	  			* current;
@@ -96,7 +98,7 @@ typedef struct
     XklConfigRec         *config_rec;
 } t_xkb_config;
 
-t_xkb_settings * xkb_settings_new( Plugin * p);
+t_xkb_settings * xkb_settings_new( /*LXDE GARBAGE Plugin * p */);
 
 gboolean   	xkb_config_initialize            	    (t_xkb_config *config, t_xkb_settings *settings,
                                                      XkbCallback callback, 
@@ -123,7 +125,7 @@ void        xkb_config_application_closed           (t_xkb_config* config,
 void        xkb_config_window_closed                (t_xkb_config* config,
                                                      guint window_id);
 
-void update_display( t_xkb_settings * );
+/* USELSS: gui-related void update_display( t_xkb_settings * ); */
 
 /* TODO: remove this function - xkl structures should not be used outside xkb-config */
 XklConfigRegistry*

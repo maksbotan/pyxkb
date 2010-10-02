@@ -311,7 +311,7 @@ xkb_config_update_settings (t_xkb_config* config, t_xkb_settings *settings)
     }
 
     xkb_config_initialize_xkb_options (config, settings);
-    update_display(settings);
+    /* update_display(settings); */
 
     return TRUE;
 }
