@@ -2,3 +2,5 @@
 .pida-metadata/*
 *.swp
 *.o
+*_wrap.c
+*.so
