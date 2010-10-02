@@ -41,46 +41,24 @@
 #define G_DISABLE_ASSERT
 #endif
 
-typedef struct
-{
-    XklEngine			 *engine;
-
-    gchar               **group_names;
-    gchar               **variants;
-    t_xkb_settings       *settings;
-    GHashTable           *variant_index_by_group;
-
-
-    GHashTable           *application_map;
-    GHashTable           *window_map;
-
-    guint                 current_window_id;
-    guint                 current_application_id;
-
-    gint                  group_count;
-
-    XkbCallback           callback;
-    gpointer              callback_data;
-
-
-    XklConfigRec         *config_rec;
-} t_xkb_config;
-
 /* REFACTORED: t_xkb_config *config; */
 
 void                xkb_config_state_changed            (XklEngine *engine,
                                                          XklEngineStateChange *change,
                                                          gint group, 
-                                                         gboolean restore);
+                                                         gboolean restore,
+                                                         t_xkb_config* config);
 
-void                xkb_config_xkl_config_changed       (XklEngine *engine);
+void                xkb_config_xkl_config_changed       (XklEngine *engine,
+                                                         t_xkb_config* config);
 
-GdkFilterReturn     handle_xevent                       (GdkXEvent * xev,
+GdkFilterReturn     handle_xevent                       (t_xkb_config* config,
+                                                         GdkXEvent * xev,
                                                          GdkEvent * event);
 
 void                xkb_config_update_configuration     (t_xkb_settings *settings);
 static void         xkb_config_free                     ();
-static void         xkb_config_initialize_xkb_options   (t_xkb_settings *settings);
+static void         xkb_config_initialize_xkb_options   (t_xkb_config* config, t_xkb_settings *settings);
 
 /* ---------------------- implementation ------------------------- */
 
@@ -95,7 +73,7 @@ void update_display( t_xkb_settings * settings )
 */
 
 gboolean
-xkb_config_initialize (t_xkb_config* config, t_xkb_settings *settings,
+xkb_config_initialize (t_xkb_config *config, t_xkb_settings *settings,
                        XkbCallback callback,
                        gpointer callback_data) 
 {
@@ -103,7 +81,7 @@ xkb_config_initialize (t_xkb_config* config, t_xkb_settings *settings,
 
     g_assert (settings != NULL);
 
-    config = g_new0 (t_xkb_config, 1);
+    /*config = g_new0 (t_xkb_config, 1);*/
 
     config->settings = settings;
     config->callback = callback;
@@ -116,7 +94,7 @@ xkb_config_initialize (t_xkb_config* config, t_xkb_settings *settings,
         return FALSE;
     }
 
-    xkb_config_update_settings (settings);
+    xkb_config_update_settings (config, settings);
 
     xkl_engine_set_group_per_toplevel_window (config->engine, FALSE);
 
@@ -132,11 +110,11 @@ xkb_config_initialize (t_xkb_config* config, t_xkb_settings *settings,
     g_signal_connect (config->engine, 
             "X-state-changed", 
             G_CALLBACK (xkb_config_state_changed), 
-            NULL);
+            config);
     g_signal_connect (config->engine,
             "X-config-changed",
             G_CALLBACK (xkb_config_xkl_config_changed),
-            NULL);
+            config);
 
     gdk_window_add_filter (NULL, (GdkFilterFunc) handle_xevent, NULL);
 
@@ -170,7 +148,7 @@ xkb_config_initialize_xkb_options (t_xkb_config* config, t_xkb_settings *setting
     config->application_map = g_hash_table_new (g_direct_hash, NULL);
 
     registry = xkl_config_registry_get_instance (config->engine);
-    xkl_config_registry_load (registry);
+    xkl_config_registry_load (registry, FALSE);
     
     config_item = xkl_config_item_new ();
 
@@ -232,22 +210,22 @@ xkb_config_free (t_xkb_config* config)
 void 
 xkb_config_finalize (t_xkb_config* config) 
 {
-    xkb_config_free ();
+    xkb_config_free (config);
 
     gdk_window_remove_filter (NULL, (GdkFilterFunc) handle_xevent, NULL);
 
-    xkl_engine_stop_listen (config->engine);
+    xkl_engine_stop_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE);
 }
 
 gint
-xkb_config_get_current_group ()
+xkb_config_get_current_group (t_xkb_config *config)
 {
     XklState* state = xkl_engine_get_current_state (config->engine);
     return state->group;
 }
 
 gboolean
-xkb_config_set_group (gint group)
+xkb_config_set_group (t_xkb_config *config, gint group)
 {
     g_assert (config != NULL);
 
@@ -332,7 +310,7 @@ xkb_config_update_settings (t_xkb_config* config, t_xkb_settings *settings)
         xkl_config_rec_activate (config->config_rec, config->engine);
     }
 
-    xkb_config_initialize_xkb_options (settings);
+    xkb_config_initialize_xkb_options (config, settings);
     update_display(settings);
 
     return TRUE;
@@ -384,7 +362,7 @@ xkb_config_window_changed (t_xkb_config* config, guint new_window_id, guint appl
             GINT_TO_POINTER (group)
     );
 
-    xkb_config_set_group (group);
+    xkb_config_set_group (config, group);
 }
 
 void
@@ -447,7 +425,7 @@ xkb_config_get_group_map (t_xkb_config* config, gint group)
         return NULL;
 
     if (group == -1)
-        group = xkb_config_get_current_group ();
+        group = xkb_config_get_current_group (config);
 
     gchar *result = config->group_names[group];
     return result;
@@ -462,16 +440,17 @@ xkb_config_get_variant_map (t_xkb_config* config, gint group)
         return NULL;
 
     if (group == -1)
-        group = xkb_config_get_current_group ();
+        group = xkb_config_get_current_group (config);
 
     return config->variants[group];
 }
 
 void
-xkb_config_state_changed (t_xkb_config* config, XklEngine *engine,
+xkb_config_state_changed (XklEngine *engine,
                           XklEngineStateChange *change,
                           gint group, 
-                          gboolean restore)
+                          gboolean restore,
+                          t_xkb_config* config)
 {
     if (change == GROUP_CHANGED)
     {
@@ -507,14 +486,14 @@ xkb_config_state_changed (t_xkb_config* config, XklEngine *engine,
 }
 
 void
-xkb_config_xkl_config_changed (t_xkb_config* config, XklEngine *engine)
+xkb_config_xkl_config_changed (XklEngine* engine, t_xkb_config* config)
 {
     g_free (config->settings->kbd_config);
     config->settings->kbd_config = NULL;
-    xkb_config_update_settings (config->settings);
+    xkb_config_update_settings (config, config->settings);
 
     if (config->callback != NULL) 
-        config->callback (xkb_config_get_current_group (), TRUE, config->callback_data);
+        config->callback (xkb_config_get_current_group (config), TRUE, config->callback_data);
 }
 
 gint
@@ -526,7 +505,7 @@ xkb_config_variant_index_for_group (t_xkb_config* config, gint group)
     gint result;
     gchar *key;
 
-    if (group == -1) group = xkb_config_get_current_group ();
+    if (group == -1) group = xkb_config_get_current_group (config);
 
     key = config->group_names[group];
 
@@ -559,7 +538,7 @@ xkb_config_get_xkl_registry (t_xkb_config* config)
     if (!config) return NULL;
 
     registry = xkl_config_registry_get_instance (config->engine);
-    xkl_config_registry_load (registry);
+    xkl_config_registry_load (registry, FALSE);
 
     return registry;
 }
@@ -580,7 +559,7 @@ void xkb_config_add_layout(t_xkb_config* config, gchar *group, gchar *variant)
 	config->settings->kbd_config->variants =
 			g_strconcat(config->settings->kbd_config->variants, ",", variant, NULL);
 
-	xkb_config_update_settings(config->settings);
+	xkb_config_update_settings(config, config->settings);
 }
 
 void xkb_config_remove_group(t_xkb_config* config, gint group)
@@ -593,7 +572,7 @@ void xkb_config_remove_group(t_xkb_config* config, gint group)
 	if (group == 0)
 		begin = 1;
 
-	g_count= xkb_config_get_group_count();
+	g_count= xkb_config_get_group_count(config);
 
 	groups = g_strsplit(config->settings->kbd_config->layouts,",", -1);
 	variants = g_strsplit(config->settings->kbd_config->variants,",", -1);
@@ -613,7 +592,7 @@ void xkb_config_remove_group(t_xkb_config* config, gint group)
 					g_strconcat(config->settings->kbd_config->variants, ",", variants[i], NULL);
 		}
 	}
-	xkb_config_update_settings(config->settings);
+	xkb_config_update_settings(config, config->settings);
 }
 
 gchar *xkb_config_get_layout_desc(t_xkb_config* config, gchar *group, gchar *variant)
@@ -621,7 +600,7 @@ gchar *xkb_config_get_layout_desc(t_xkb_config* config, gchar *group, gchar *var
 	gchar *description;
 	XklConfigRegistry *reg;
     reg = xkl_config_registry_get_instance (config->engine);
-    xkl_config_registry_load (reg);
+    xkl_config_registry_load (reg, FALSE);
 
 	XklConfigItem *item;
 	item = xkl_config_item_new();

@@ -66,31 +66,62 @@ typedef struct
     gint 				next;
 } t_xkb_settings;
 
-t_xkb_settings * xkb_settings_new( Plugin * p);
 
 typedef void        (*XkbCallback)                  (gint current_group,
                                                      gboolean groups_changed,
                                                      gpointer user_data);
 
-gboolean   	xkb_config_initialize            	    (t_xkb_settings *settings,
+typedef struct
+{
+    XklEngine			 *engine;
+
+    gchar               **group_names;
+    gchar               **variants;
+    t_xkb_settings       *settings;
+    GHashTable           *variant_index_by_group;
+
+
+    GHashTable           *application_map;
+    GHashTable           *window_map;
+
+    guint                 current_window_id;
+    guint                 current_application_id;
+
+    gint                  group_count;
+
+    XkbCallback           callback;
+    gpointer              callback_data;
+
+
+    XklConfigRec         *config_rec;
+} t_xkb_config;
+
+t_xkb_settings * xkb_settings_new( Plugin * p);
+
+gboolean   	xkb_config_initialize            	    (t_xkb_config *config, t_xkb_settings *settings,
                                                      XkbCallback callback, 
                                                      gpointer data);
 void        xkb_config_finalize                     ();
-gboolean    xkb_config_update_settings              (t_xkb_settings *settings);
+gboolean    xkb_config_update_settings              (t_xkb_config* config, t_xkb_settings *settings);
 gint        xkb_config_get_group_count              ();
-gchar*      xkb_config_get_group_map               	(gint group);
-gchar*      xkb_config_get_variant_map 				(gint group);
-gboolean    xkb_config_set_group                    (gint group);
+gchar*      xkb_config_get_group_map               	(t_xkb_config* config,
+                                                     gint group);
+gchar*      xkb_config_get_variant_map 				(t_xkb_config* config,
+                                                     gint group);
+gboolean    xkb_config_set_group                    (t_xkb_config* config, gint group);
 gboolean    xkb_config_next_group                   ();
-gint        xkb_config_variant_index_for_group      (gint group);
-gchar*		xkb_config_get_layout_desc				(gchar *group, gchar *variant);
+gint        xkb_config_variant_index_for_group      (t_xkb_config* config, gint group);
+gchar*		xkb_config_get_layout_desc				(t_xkb_config* config, gchar *group, gchar *variant);
 
-void 		xkb_config_add_layout					(gchar *group, gchar *variant);
-void 		xkb_config_remove_group					(gint group);
-void        xkb_config_window_changed               (guint new_window_id,
+void 		xkb_config_add_layout					(t_xkb_config* config, gchar *group, gchar *variant);
+void 		xkb_config_remove_group					(t_xkb_config* config, gint group);
+void        xkb_config_window_changed               (t_xkb_config* config,
+                                                     guint new_window_id,
                                                      guint application_id);
-void        xkb_config_application_closed           (guint application_id);
-void        xkb_config_window_closed                (guint window_id);
+void        xkb_config_application_closed           (t_xkb_config* config,
+                                                     guint application_id);
+void        xkb_config_window_closed                (t_xkb_config* config,
+                                                     guint window_id);
 
 void update_display( t_xkb_settings * );
 
