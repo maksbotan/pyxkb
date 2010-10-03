@@ -43,23 +43,6 @@
 
 /* REFACTORED: XkbConfig *config; */
 
-void                xkb_config_state_changed            (XklEngine *engine,
-                                                         XklEngineStateChange *change,
-                                                         gint group, 
-                                                         gboolean restore,
-                                                         XkbConfig* config);
-
-void                xkb_config_xkl_config_changed       (XklEngine *engine,
-                                                         XkbConfig* config);
-
-GdkFilterReturn     handle_xevent                       (XkbConfig* config,
-                                                         GdkXEvent * xev,
-                                                         GdkEvent * event);
-
-void                xkb_config_update_configuration     (t_xkb_settings *settings);
-static void         xkb_config_free                     ();
-static void         xkb_config_initialize_xkb_options   (XkbConfig* config, t_xkb_settings *settings);
-
 /* ---------------------- implementation ------------------------- */
 
 /* USELESS: gui-related
@@ -142,7 +125,7 @@ xkb_config_initialize_xkb_options (XkbConfig* config, t_xkb_settings *settings)
     }
 
 
-    xkb_config_free ();
+    xkb_config_free (config);
     
     config->window_map = g_hash_table_new (g_direct_hash, NULL);
     config->application_map = g_hash_table_new (g_direct_hash, NULL);

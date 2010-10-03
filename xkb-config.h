@@ -125,6 +125,25 @@ void        xkb_config_application_closed           (XkbConfig* config,
 void        xkb_config_window_closed                (XkbConfig* config,
                                                      guint window_id);
 
+void        xkb_config_state_changed                (XklEngine *engine,
+                                                     XklEngineStateChange *change,
+                                                     gint group, 
+                                                     gboolean restore,
+                                                     XkbConfig* config);
+
+void        xkb_config_xkl_config_changed           (XklEngine *engine,
+                                                     XkbConfig* config);
+
+GdkFilterReturn handle_xevent                       (XkbConfig* config,
+                                                     GdkXEvent * xev,
+                                                     GdkEvent * event);
+
+/* Probablt useless: void        xkb_config_update_configuration     (t_xkb_settings *settings); */
+static void xkb_config_free                         (XkbConfig* config);
+static void xkb_config_initialize_xkb_options       (XkbConfig* config, t_xkb_settings *settings);
+
+
+
 /* USELSS: gui-related void update_display( t_xkb_settings * ); */
 
 /* TODO: remove this function - xkl structures should not be used outside xkb-config */
