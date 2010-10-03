@@ -96,33 +96,33 @@ typedef struct
 
 
     XklConfigRec         *config_rec;
-} t_xkb_config;
+} XkbConfig;
 
 /*t_xkb_settings * xkb_settings_new( *LXDE GARBAGE Plugin * p *);*/
 
-gboolean   	xkb_config_initialize            	    (t_xkb_config *config, t_xkb_settings *settings,
+gboolean   	xkb_config_initialize            	    (XkbConfig *config, t_xkb_settings *settings,
                                                      XkbCallback callback, 
                                                      gpointer data);
 void        xkb_config_finalize                     ();
-gboolean    xkb_config_update_settings              (t_xkb_config* config, t_xkb_settings *settings);
+gboolean    xkb_config_update_settings              (XkbConfig* config, t_xkb_settings *settings);
 gint        xkb_config_get_group_count              ();
-gchar*      xkb_config_get_group_map               	(t_xkb_config* config,
+gchar*      xkb_config_get_group_map               	(XkbConfig* config,
                                                      gint group);
-gchar*      xkb_config_get_variant_map 				(t_xkb_config* config,
+gchar*      xkb_config_get_variant_map 				(XkbConfig* config,
                                                      gint group);
-gboolean    xkb_config_set_group                    (t_xkb_config* config, gint group);
+gboolean    xkb_config_set_group                    (XkbConfig* config, gint group);
 gboolean    xkb_config_next_group                   ();
-gint        xkb_config_variant_index_for_group      (t_xkb_config* config, gint group);
-gchar*		xkb_config_get_layout_desc				(t_xkb_config* config, gchar *group, gchar *variant);
+gint        xkb_config_variant_index_for_group      (XkbConfig* config, gint group);
+gchar*		xkb_config_get_layout_desc				(XkbConfig* config, gchar *group, gchar *variant);
 
-void 		xkb_config_add_layout					(t_xkb_config* config, gchar *group, gchar *variant);
-void 		xkb_config_remove_group					(t_xkb_config* config, gint group);
-void        xkb_config_window_changed               (t_xkb_config* config,
+void 		xkb_config_add_layout					(XkbConfig* config, gchar *group, gchar *variant);
+void 		xkb_config_remove_group					(XkbConfig* config, gint group);
+void        xkb_config_window_changed               (XkbConfig* config,
                                                      guint new_window_id,
                                                      guint application_id);
-void        xkb_config_application_closed           (t_xkb_config* config,
+void        xkb_config_application_closed           (XkbConfig* config,
                                                      guint application_id);
-void        xkb_config_window_closed                (t_xkb_config* config,
+void        xkb_config_window_closed                (XkbConfig* config,
                                                      guint window_id);
 
 /* USELSS: gui-related void update_display( t_xkb_settings * ); */
