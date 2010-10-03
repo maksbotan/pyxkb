@@ -4,3 +4,4 @@
 *.o
 *_wrap.c
 *.so
+xkb_config.py
