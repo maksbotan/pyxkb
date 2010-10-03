@@ -83,7 +83,7 @@ xkb_config_initialize (XkbConfig *config, t_xkb_settings *settings,
 
     /*Current group*/
 
-    cur = xkb_config_get_current_group();
+    cur = xkb_config_get_current_group(config);
 
     config->settings->current = g_strdup(config->group_names[cur]);
 
@@ -99,7 +99,7 @@ xkb_config_initialize (XkbConfig *config, t_xkb_settings *settings,
             G_CALLBACK (xkb_config_xkl_config_changed),
             config);
 
-    gdk_window_add_filter (NULL, (GdkFilterFunc) handle_xevent, NULL);
+    gdk_window_add_filter (NULL, (GdkFilterFunc) handle_xevent, config);
 
     return TRUE;
 }
@@ -195,7 +195,7 @@ xkb_config_finalize (XkbConfig* config)
 {
     xkb_config_free (config);
 
-    gdk_window_remove_filter (NULL, (GdkFilterFunc) handle_xevent, NULL);
+    gdk_window_remove_filter (NULL, (GdkFilterFunc) handle_xevent, config);
 
     xkl_engine_stop_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE);
 }
@@ -504,7 +504,7 @@ xkb_config_variant_index_for_group (XkbConfig* config, gint group)
 }
 
 GdkFilterReturn
-handle_xevent (XkbConfig* config, GdkXEvent * xev, GdkEvent * event)
+handle_xevent (GdkXEvent * xev, GdkEvent * event, XkbConfig* config)
 {
     XEvent *xevent = (XEvent *) xev;
     

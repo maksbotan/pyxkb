@@ -2,7 +2,7 @@
 
 import gtk, gtk.gdk, gobject
 import xklavier
-from xkb_config import xkb_config, xkb_settings, group_policy
+from xkb_config import XkbConfig, XkbSettings, GROUP_POLICY_GLOBAL #XkbConfig, XkbSettings, group_policy
 data = [
     ["us", "U.S.English"],
     ["es", "Spain/Mexico"],
@@ -38,9 +38,9 @@ class PyXKB:
         self.child = None
         self.selection = None 
         
-        xkb = xkb_settings()
+        xkb = XkbSettings()
         
-        xkb.group_policy = group_policy.GLOBAL
+        xkb.group_policy = GROUP_POLICY_GLOBAL
         xkb.never_modify_config = False
         xkb.current = "us"
         xkb.tray_icon = gtk.Label(xkb.current)
@@ -48,7 +48,7 @@ class PyXKB:
         xkb.next = 1
         wnd = gtk.Window()
         wnd.show()
-        self.xkb_config = xkb_config(xkb, self.xkb_state_changed, xkb, wnd)
+        self.XkbConfig = XkbConfig(xkb, self.xkb_state_changed, xkb)
         
         self.open_config()
         
@@ -81,7 +81,7 @@ class PyXKB:
             1, sel_layout[0],
             2, sel_layout[2])
     
-        #self.xkb_config.add_layout(sel_layout[0], sel_layout[1])
+        #self.XkbConfig.add_layout(sel_layout[0], sel_layout[1])
     
     def remove_layout(self, menuitem, userdata):
         self.selection = self.treeview.get_selection()
@@ -96,11 +96,11 @@ class PyXKB:
         
             model.remove(self.iter)
 
-            #xkb_config_remove_group(layout_selected);
+            #XkbConfig_remove_group(layout_selected);
 
     def fixed_toggle(self, cell, path_str, model):
                 
-                cur = self.xkb_config.get_current_group()
+                cur = self.XkbConfig.get_current_group()
                 path = tuple(path_str.split(":"))
                                 
                 ind = path[0]
@@ -113,7 +113,7 @@ class PyXKB:
                                 0, True)
                         model.set(iter_old,
                                 0, False)
-                print # xkb_config_set_group(*ind);
+                print # XkbConfig_set_group(*ind);
         
     def add_columns_selected_layouts(self):
         model = self.treeview.get_model()
@@ -153,23 +153,23 @@ class PyXKB:
             gobject.TYPE_STRING,
             gobject.TYPE_STRING)
                 
-        current_group = self.xkb_config.get_current_group();
-        group_count = self.xkb_config.get_group_count();
+        current_group = self.XkbConfig.get_current_group();
+        group_count = self.XkbConfig.get_group_count();
                 
         for i in xrange(group_count):
-            group_map = self.xkb_config.get_group_map(i);
-            variant_map = self.xkb_config.get_variant_map(i);
+            group_map = self.XkbConfig.get_group_map(i);
+            variant_map = self.XkbConfig.get_variant_map(i);
             self.iter = store.append(None)
 
             store.set(self.iter,
                 0, False if i != current_group else True,
                 1, group_map,
-                2, self.xkb_config.get_layout_desc(group_map, variant_map))
+                2, self.XkbConfig.get_layout_desc(group_map, variant_map))
                 
         return store
         
     def create_combo_box_model(self):
-        #registry = xkb_config_get_xkl_registry ();
+        #registry = XkbConfig_get_xkl_registry ();
            
         store = gtk.TreeStore(gobject.TYPE_STRING)
             
@@ -272,7 +272,7 @@ class PyXKB:
             1, config_item.get_name())
     #Switcher implementation
     def change_current_layout(self):
-        self.xkb_config.next_group()
+        self.XkbConfig.next_group()
                 
     def tray_icon_press(self, widget, event, userdata):
         if event.button == 3: #right button
@@ -303,7 +303,7 @@ class PyXKB:
     def layout_dialog_run(self):
         t_view = gtk.TreeView()
         
-        registry = self.xkb_config.get_xkl_registry()
+        registry = self.XkbConfig.get_xkl_registry()
     
         dialog = gtk.Dialog("Add layout",
             None,
@@ -377,6 +377,6 @@ class PyXKB:
 pyxkb = PyXKB()
 #pyxkb.config()
 
-#lxkb_config()
+#lXkbConfig()
 
-#xkb_settings_layout_dialog_run()
+#XkbSettings_layout_dialog_run()

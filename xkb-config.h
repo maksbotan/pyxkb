@@ -111,7 +111,7 @@ gchar*      xkb_config_get_group_map               	(XkbConfig* config,
 gchar*      xkb_config_get_variant_map 				(XkbConfig* config,
                                                      gint group);
 gboolean    xkb_config_set_group                    (XkbConfig* config, gint group);
-gboolean    xkb_config_next_group                   ();
+gboolean    xkb_config_next_group                   (XkbConfig* config);
 gint        xkb_config_variant_index_for_group      (XkbConfig* config, gint group);
 gchar*		xkb_config_get_layout_desc				(XkbConfig* config, gchar *group, gchar *variant);
 
@@ -134,9 +134,9 @@ void        xkb_config_state_changed                (XklEngine *engine,
 void        xkb_config_xkl_config_changed           (XklEngine *engine,
                                                      XkbConfig* config);
 
-GdkFilterReturn handle_xevent                       (XkbConfig* config,
-                                                     GdkXEvent * xev,
-                                                     GdkEvent * event);
+GdkFilterReturn handle_xevent                       (GdkXEvent * xev,
+                                                     GdkEvent * event,
+                                                     XkbConfig* config);
 
 /* Probablt useless: void        xkb_config_update_configuration     (t_xkb_settings *settings); */
 static void xkb_config_free                         (XkbConfig* config);
@@ -147,6 +147,7 @@ static void xkb_config_initialize_xkb_options       (XkbConfig* config, t_xkb_se
 /* USELSS: gui-related void update_display( t_xkb_settings * ); */
 
 /* TODO: remove this function - xkl structures should not be used outside xkb-config */
+/* TODO: ^^ */
 XklConfigRegistry*
             xkb_config_get_xkl_registry             ();
 gint        xkb_config_get_max_layout_number        ();

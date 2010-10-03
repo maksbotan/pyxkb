@@ -26,7 +26,7 @@ void xkbconfig_callack_marshal(gint current_group,
                                                                 
         PyGILState_Release(state);
 
-        free (callback);
+        /*free (callback);*/
 
         return;
 }
@@ -39,7 +39,7 @@ typedef enum
         GROUP_POLICY_PER_APPLICATION    = 2
 } t_group_policy;
 
-typedef struct
+%name (KbdConfig) typedef struct
 {
     gchar*          model;
     gchar*          layouts;
@@ -48,17 +48,17 @@ typedef struct
     gchar*          toggle_option;
 } t_xkb_kbd_config;
 
-typedef struct
+%name(XkbSettings) typedef struct
 {
     /*LXDE GARBAGE:     Plugin              * plugin; */
-    GtkWidget           * mainw,
-                        * tray_icon;
-    gchar               * current;
+    /*GUI RELATED:      GtkWidget           * mainw, 
+                        * tray_icon;                 */
+    char               *current;
     t_group_policy      group_policy;
-    gint                default_group;
-    gboolean            never_modify_config, config_changed;
+    int                 default_group;
+    int                 never_modify_config, config_changed;
     t_xkb_kbd_config*   kbd_config;
-    gint                next;
+    int                 next;
 } t_xkb_settings;
 
 
@@ -77,10 +77,10 @@ typedef struct
     gint                  group_count;
     XkbCallback           callback;
     gpointer              callback_data;
-    XklConfigRec         *config_rec;
+    XklConfigRec          *config_rec;
 } XkbConfig;
 
-%extend XkbConfig {
+%addmethods XkbConfig {
     XkbConfig(t_xkb_settings* settings, PyObject* callback, PyObject* data){
         XkbConfig* config;
         CallBack* c_callback;
@@ -97,4 +97,45 @@ typedef struct
 
         return config;
     }
+
+    void __del__(){
+        xkb_config_finalize(self);
+    }
+
+    int update_settings(t_xkb_settings* settings){
+        return xkb_config_update_settings(self, settings);
+    }
+
+    char* get_group_map(int group){
+        return xkb_config_get_group_map(self, group);
+    }
+
+    int set_group(int group){
+        return xkb_config_set_group(self, group);
+    }
+
+    int next_group() {
+        return xkb_config_next_group(self);
+    }
+
+    int variant_index_by_group(int group) {
+        return xkb_config_variant_index_by_group(self, group);
+    }
+
+    char* get_layout_desc(char* group, char* variant){
+        return xkb_config_get_layout_desc(self, group, variant);
+    }
+
+    void add_layout(char* group, char* variant){
+        xkb_config_add_layout(self, group, variant);
+    }
+
+    void remove_group(int group){
+        xkb_config_remove_group(self, group);
+    }
+
+    /* INTERNAL
+    void window_changed(uint new_window_id, uint application_id){
+        xkb_config_window_changed(self, new_window_id, application_id);
+    }*/ 
 }
