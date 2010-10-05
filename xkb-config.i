@@ -1,6 +1,8 @@
 %module kbdd
 %{
 #include "libkbdd.h"
+#include <X11/Xlib.h>
+#include <glib.h>
 typedef struct
 {
    PyObject *func, *data;
@@ -10,10 +12,11 @@ typedef void (*KbddCallback)(unsigned int, void*);
 
 typedef struct
 {
-    void* some;
+    CallBack* __swig_callback;
+    Display*  __display;
 } Kbdd;
 
-void kbdd_callack_marshal(unsigned int group,
+void kbdd_callback_marshal(unsigned int group,
                           void* user_data)
 {
         CallBack* callback;
@@ -47,11 +50,58 @@ typedef enum
 
 typedef struct
 {
-    void* some;
+    CallBack* __swig_callback;
+    Display*  __display;
 } Kbdd;
 
 %extend Kbdd {
-    Kbdd(PyObject* callback, PyObject* userdate){
+    Kbdd(PyObject* callback, PyObject* userdata){
+        Kbdd* kbdd;
+
+        kbdd = g_new0(Kbdd, 1);
+
+        Kbdd_init();
+        Display* display;
+        display = Kbdd_initialize_display();
+        Kbdd_initialize_listeners(display);
+        
+        kbdd->__swig_callback = malloc(sizeof(CallBack));
+        kbdd->__swig_callback->func = callback;
+        kbdd->__swig_callback->data = userdata;
+
+        kbdd->__display = display;
+
+        Py_INCREF(callback);
+        Py_XINCREF(userdata);
+
+        Kbdd_setupUpdateCallback(kbdd_callback_marshal,kbdd->__swig_callback);
+
+        return kbdd;
+    }
+
+    ~Kbdd(){
+        if (self != NULL)
+            Kbdd_clean();
+            free (self->__swig_callback);
+            g_free(self);
+    }
+
+    void start(){
+        Kbdd_default_loop(self->__display);
+    }
+    
+    void next_group(){
+        /*TODO: when implemented in libkbdd.c*/
         return;
+    }
+    
+    void set_policy(t_group_policy policy){
+        /*TODO: when implemented in libkbdd.c*/
+        return;
+    }
+
+    char* get_current_layout(){
+        /*TODO: when implemented in libkbdd.c*/
+        return "us";
     }
 }

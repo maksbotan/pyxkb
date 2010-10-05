@@ -13,13 +13,13 @@ OBJECTS=${SOURCES:.c=.o}
 INTERFACES=xkb-config.i
 
 libkbdd:
-	$(MAKE) -C kbdd/ src/libkbdd.o
+	$(MAKE) -C kbdd/ src/libkbdd.o CFLAGS="-g -ggdb"
 
 $(SOURCES): $(INTERFACES)
 	swig -python -shadow $<
 
 $(OBJECTS): $(SOURCES)
-	$(CC) $(GLIB_CFLAGS) $(KBDD_CFLAGS) -I/usr/include/python2.6/ $< -c -o $@
+	$(CC) $(GLIB_CFLAGS) $(KBDD_CFLAGS) -I/usr/include/python2.6/ $< -c -o $@ -g -ggdb
 
 kbdd: libkbdd $(BINDINGS) $(OBJECTS)
 	$(CC) -shared kbdd/libkbdd.o kbdd/storage.o xkb-config_wrap.o -o _kbdd.so ${GLIB_LIBS} -lpython2.6 -lX11
