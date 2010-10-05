@@ -1,0 +1,3 @@
+[submodule "kbdd"]
+	path = kbdd
+	url = git://github.com/qnikst/kbdd.git
