@@ -88,7 +88,7 @@ xkb_config_initialize (XkbConfig *config, t_xkb_settings *settings,
     config->settings->current = g_strdup(config->group_names[cur]);
 
 
-    xkl_engine_start_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE);
+    xkl_engine_start_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE | XKLL_MANAGE_WINDOW_STATES);
 
     g_signal_connect (config->engine, 
             "X-state-changed", 
@@ -97,6 +97,10 @@ xkb_config_initialize (XkbConfig *config, t_xkb_settings *settings,
     g_signal_connect (config->engine,
             "X-config-changed",
             G_CALLBACK (xkb_config_xkl_config_changed),
+            config);
+    g_signal_connect (config->engine,
+            "new-toplevel-window",
+            G_CALLBACK (xkb_config_window_changed),
             config);
 
     gdk_window_add_filter (NULL, (GdkFilterFunc) handle_xevent, config);
@@ -197,7 +201,7 @@ xkb_config_finalize (XkbConfig* config)
 
     gdk_window_remove_filter (NULL, (GdkFilterFunc) handle_xevent, config);
 
-    xkl_engine_stop_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE);
+    xkl_engine_stop_listen (config->engine, XKLL_TRACK_KEYBOARD_STATE | XKLL_MANAGE_WINDOW_STATES);
 }
 
 gint
@@ -300,7 +304,7 @@ xkb_config_update_settings (XkbConfig* config, t_xkb_settings *settings)
 }
 
 void
-xkb_config_window_changed (XkbConfig* config, guint new_window_id, guint application_id)
+xkb_config_window_changed (XklEngine* engine, guint new_window_id, guint application_id, XkbConfig* config)
 {
     g_assert (config != NULL);
 
@@ -506,9 +510,11 @@ xkb_config_variant_index_for_group (XkbConfig* config, gint group)
 GdkFilterReturn
 handle_xevent (GdkXEvent * xev, GdkEvent * event, XkbConfig* config)
 {
+    /*printf ("Event: %d\n", ((XEvent*) xev)->type);*/
+
     XEvent *xevent = (XEvent *) xev;
     
-    xkl_engine_filter_events (config->engine, xevent);
+    /*printf ("return: %d\n", */xkl_engine_filter_events (config->engine, xevent)/*)*/;
    
     return GDK_FILTER_CONTINUE;
 }

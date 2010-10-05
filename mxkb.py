@@ -2,7 +2,8 @@
 
 import gtk, gtk.gdk, gobject
 import xklavier
-from xkb_config import XkbConfig, XkbSettings, GROUP_POLICY_GLOBAL #XkbConfig, XkbSettings, group_policy
+from xkb_config import XkbConfig, XkbSettings
+from xkb_config import GROUP_POLICY_GLOBAL, GROUP_POLICY_PER_APPLICATION, GROUP_POLICY_PER_WINDOW
 data = [
     ["us", "U.S.English"],
     ["es", "Spain/Mexico"],
@@ -101,7 +102,7 @@ class PyXKB:
     def fixed_toggle(self, cell, path_str, model):
                 
                 cur = self.XkbConfig.get_current_group()
-                path = tuple(path_str.split(":"))
+                path = tuple([int(i) for i in path_str.split(":")])
                                 
                 ind = path[0]
                 
@@ -113,7 +114,7 @@ class PyXKB:
                                 0, True)
                         model.set(iter_old,
                                 0, False)
-                print # XkbConfig_set_group(*ind);
+                self.XkbConfig.set_group(ind)
         
     def add_columns_selected_layouts(self):
         model = self.treeview.get_model()
@@ -184,23 +185,23 @@ class PyXKB:
         vbox = gtk.VBox(False, 0)
                 
         #combo with layouts
-        frame_layouts = gtk.Frame("Select one input language")
+        #frame_layouts = gtk.Frame("Select one input language")
              
-        hbox_layouts = gtk.HBox(False, 0)
+        #hbox_layouts = gtk.HBox(False, 0)
                
-        vbox.pack_start(frame_layouts, False, False, 0)
-        hbox_layouts.set_border_width(5)
-        frame_layouts.add(hbox_layouts)
+        #vbox.pack_start(frame_layouts, False, False, 0)
+        #hbox_layouts.set_border_width(5)
+        #frame_layouts.add(hbox_layouts)
              
-        model = self.create_combo_box_model()
-        combo_layouts = gtk.ComboBox(model)
-        combo_layouts.set_active(0)
+        #model = self.create_combo_box_model()
+        #combo_layouts = gtk.ComboBox(model)
+        #combo_layouts.set_active(0)
                 
-        hbox_layouts.add(combo_layouts)
+        #hbox_layouts.add(combo_layouts)
                 
-        renderer = gtk.CellRendererText()
-        combo_layouts.pack_start(renderer, False)
-        combo_layouts.set_attributes(renderer, text=0)
+        #renderer = gtk.CellRendererText()
+        #combo_layouts.pack_start(renderer, False)
+        #combo_layouts.set_attributes(renderer, text=0)
               
         #treeview and buttons
         frame_tv = gtk.Frame("Selected Layouts")
@@ -243,10 +244,28 @@ class PyXKB:
                 
         button = gtk.Button(stock=gtk.STOCK_EDIT)
         hbox_btn.add(button)
-                
-        #creating checkbox
-        check = gtk.CheckButton("Manage layouts per application")
-        vbox.pack_start(check, False, False, 0)
+               
+        #creating radio buttons
+        gpolicy_frame = gtk.Frame("Group policy")
+
+        global_radio = gtk.RadioButton(label="Global")
+        global_radio.connect("toggled", self.radio_toggled, "global")
+        
+        app_radio = gtk.RadioButton(group=global_radio, label="Application")
+        app_radio.connect("toggled", self.radio_toggled, "application")
+
+        wnd_radio = gtk.RadioButton(group=global_radio, label="Window")
+        wnd_radio.connect("toggled", self.radio_toggled, "window")
+
+        radio_box = gtk.VBox()
+        radio_box.set_border_width(5)
+
+        for i in [global_radio, app_radio, wnd_radio]:
+            radio_box.pack_start(i, False, False, 0)
+
+        gpolicy_frame.add(radio_box)
+        
+        vbox.pack_start(gpolicy_frame, False, False, 0)
         vbox.set_border_width(5)
                 
         return vbox
@@ -361,10 +380,22 @@ class PyXKB:
                 
         dialog.destroy()
         return None
-    def xkb_state_changed(self, currest_group, config_changed, settings):
+    def xkb_state_changed(self, current_group, config_changed, settings):
         print "state_changed"
         self.update_display(settings)
-    
+    def radio_toggled(self, radiobutton, caption):
+        active = radiobutton.get_active()
+        
+        if not active:
+            return
+
+        if caption == "global":
+            self.XkbConfig.settings.group_policy = GROUP_POLICY_GLOBAL
+        elif caption == "application":
+            self.XkbConfig.settings.group_policy = GROUP_POLICY_PER_APPLICATION
+        elif caption == "window":
+            self.XkbConfig.settings.group_policy = GROUP_POLICY_PER_WINDOW
+        
     def update_display(self, settings):
         pass
 #wnd = gtk.Window()

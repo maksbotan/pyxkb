@@ -105,7 +105,7 @@ gboolean   	xkb_config_initialize            	    (XkbConfig *config, t_xkb_sett
                                                      gpointer data);
 void        xkb_config_finalize                     ();
 gboolean    xkb_config_update_settings              (XkbConfig* config, t_xkb_settings *settings);
-gint        xkb_config_get_group_count              ();
+gint        xkb_config_get_group_count              (XkbConfig* config);
 gchar*      xkb_config_get_group_map               	(XkbConfig* config,
                                                      gint group);
 gchar*      xkb_config_get_variant_map 				(XkbConfig* config,
@@ -114,12 +114,13 @@ gboolean    xkb_config_set_group                    (XkbConfig* config, gint gro
 gboolean    xkb_config_next_group                   (XkbConfig* config);
 gint        xkb_config_variant_index_for_group      (XkbConfig* config, gint group);
 gchar*		xkb_config_get_layout_desc				(XkbConfig* config, gchar *group, gchar *variant);
-
+int         xkb_config_get_current_group            (XkbConfig* config);
 void 		xkb_config_add_layout					(XkbConfig* config, gchar *group, gchar *variant);
 void 		xkb_config_remove_group					(XkbConfig* config, gint group);
-void        xkb_config_window_changed               (XkbConfig* config,
+void        xkb_config_window_changed               (XklEngine* engine,
                                                      guint new_window_id,
-                                                     guint application_id);
+                                                     guint application_id,
+                                                     XkbConfig* config);
 void        xkb_config_application_closed           (XkbConfig* config,
                                                      guint application_id);
 void        xkb_config_window_closed                (XkbConfig* config,

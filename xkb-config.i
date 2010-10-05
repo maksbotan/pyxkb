@@ -13,16 +13,15 @@ void xkbconfig_callack_marshal(gint current_group,
         CallBack* callback;
         callback = (CallBack*) user_data;
         PyGILState_STATE state;
-        PyObject *ret;
         int retval;
 
         state = PyGILState_Ensure();
                         
         if (callback->data != NULL)
-            ret = PyObject_CallFunction(callback->func, "OO", callback->data);                                          
+            PyObject_CallFunction(callback->func, "iiO", current_group, groups_changed, callback->data);
         else
             Py_INCREF(Py_None);
-            ret = PyObject_CallFunction(callback->func, "O", Py_None);
+            PyObject_CallFunction(callback->func, "O", Py_None);
                                                                 
         PyGILState_Release(state);
 
@@ -120,6 +119,18 @@ typedef struct
 
     int variant_index_by_group(int group) {
         return xkb_config_variant_index_by_group(self, group);
+    }
+
+    int get_group_count(){
+        return xkb_config_get_group_count(self);
+    }
+
+    int get_current_group(){
+        return xkb_config_get_current_group(self);
+    }
+
+    char* get_variant_map(int group) {
+        return xkb_config_get_variant_map(self, group);
     }
 
     char* get_layout_desc(char* group, char* variant){
