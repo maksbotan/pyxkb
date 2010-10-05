@@ -1,4 +1,4 @@
-all: xkb-config
+all: kbdd
 
 GLIB_LIBS = `pkg-config glib-2.0 --libs`
 GLIB_CFLAGS = `pkg-config glib-2.0 --cflags`
@@ -8,8 +8,18 @@ GLIB_CFLAGS = `pkg-config glib-2.0 --cflags`
 
 KBDD_CFLAGS="-Ikbdd/src/"
 
-xkb-config:
-	$(MAKE) -C kbdd/
-	swig -python -shadow xkb-config.i
-	$(CC) -c xkb-config_wrap.c -I/usr/include/python2.6/ ${GLIB_LIBS} ${GLIB_CFLAGS} ${KBDD_CFLAGS} -g -ggdb 
+SOURCES=xkb-config_wrap.c
+OBJECTS=${SOURCES:.c=.o}
+INTERFACES=xkb-config.i
+
+libkbdd:
+	$(MAKE) -C kbdd/ src/libkbdd.o
+
+$(SOURCES): $(INTERFACES)
+	swig -python -shadow $<
+
+$(OBJECTS): $(SOURCES)
+	$(CC) $(GLIB_CFLAGS) $(KBDD_CFLAGS) -I/usr/include/python2.6/ $< -c -o $@
+
+kbdd: libkbdd $(BINDINGS) $(OBJECTS)
 	$(CC) -shared kbdd/libkbdd.o kbdd/storage.o xkb-config_wrap.o -o _kbdd.so ${GLIB_LIBS} -lpython2.6 -lX11
